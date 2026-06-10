@@ -23,6 +23,8 @@ interface Stats {
   recentCallOffs: number;
   pendingDisciplinary: number;
   darToday: number;
+  darsThisMonth: number;
+  callOffsThisMonth: number;
 }
 
 interface RecentItem {
@@ -36,7 +38,7 @@ interface RecentItem {
 
 export default function Dashboard() {
   const [user, setUser] = useState<{ email: string } | null>(null);
-  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, darToday: 0 });
+  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, darToday: 0, darsThisMonth: 0, callOffsThisMonth: 0 });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +56,8 @@ export default function Dashboard() {
     });
 
     const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     Promise.all([
       supabase.from("time_off_requests").select("id, officer_name, absence_type, dates_requested, status, submitted_at").eq("status", "pending").order("submitted_at", { ascending: false }).limit(5),
@@ -63,12 +67,16 @@ export default function Dashboard() {
       supabase.from("time_off_requests").select("id", { count: "exact" }).eq("status", "pending"),
       supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
       supabase.from("disciplinary_records").select("id", { count: "exact" }).is("signature", null),
-    ]).then(([timeOff, callOffs, disciplinary, dars, toCount, coCount, discCount]) => {
+      supabase.from("dar_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
+      supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
+    ]).then(([timeOff, callOffs, disciplinary, dars, toCount, coCount, discCount, darMonth, coMonth]) => {
       setStats({
         pendingTimeOff: toCount.count || 0,
         recentCallOffs: coCount.count || 0,
         pendingDisciplinary: discCount.count || 0,
         darToday: dars.data?.length || 0,
+        darsThisMonth: darMonth.count || 0,
+        callOffsThisMonth: coMonth.count || 0,
       });
 
       const items: RecentItem[] = [
@@ -88,16 +96,17 @@ export default function Dashboard() {
     window.location.href = "/";
   };
 
+  const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
+
   const typeConfig: Record<string, { label: string; color: string; bg: string; link: (id: string) => string }> = {
     "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: (id) => `https://timeoffrequest.xing.wtf/approve?id=${id}` },
-    "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `https://calloff.xing.wtf` },
+    "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `https://calloff.xing.wtf/records` },
     "disciplinary": { label: "Disciplinary", color: "#b91c1c", bg: "#fef2f2", link: (id) => `https://disciplinaryformresponse.xing.wtf/view?id=${id}` },
   };
 
   return (
     <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
-      {/* Top nav */}
       <div style={{ background: NAVY, padding: "0.75rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <div style={{ color: WHITE, fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -115,24 +124,39 @@ export default function Dashboard() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1rem" }}>
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+        {/* Top stats row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
           {[
             { label: "Pending Time-Off", value: stats.pendingTimeOff, color: NAVY, link: "https://timeoffrequest.xing.wtf/requests" },
             { label: "Call-Offs (7 days)", value: stats.recentCallOffs, color: "#92400e", link: "https://calloff.xing.wtf/records" },
             { label: "Pending Acknowledgements", value: stats.pendingDisciplinary, color: "#b91c1c", link: "https://disciplinaryformresponse.xing.wtf/records" },
             { label: "DARs Today", value: stats.darToday, color: GREEN, link: "https://dar.xing.wtf/report" },
           ].map((stat) => (
-            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${stat.color}`, borderRadius: 4, padding: "1.25rem 1.5rem", textDecoration: "none", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", transition: "box-shadow 0.15s" }}>
+            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${stat.color}`, borderRadius: 4, padding: "1.25rem 1.5rem", textDecoration: "none", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               <div style={{ fontSize: "2rem", fontWeight: 800, color: stat.color, lineHeight: 1 }}>{loading ? "—" : stat.value}</div>
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{stat.label}</div>
             </a>
           ))}
         </div>
 
+        {/* Monthly stats row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+          {[
+            { label: `DARs — ${currentMonth}`, value: stats.darsThisMonth, color: GREEN, link: "https://dar.xing.wtf/report", icon: "📋" },
+            { label: `Call-Offs — ${currentMonth}`, value: stats.callOffsThisMonth, color: "#92400e", link: "https://calloff.xing.wtf/records", icon: "📞" },
+          ].map((stat) => (
+            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${stat.color}`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize: "1.75rem" }}>{stat.icon}</div>
+              <div>
+                <div style={{ fontSize: "1.75rem", fontWeight: 800, color: stat.color, lineHeight: 1 }}>{loading ? "—" : stat.value}</div>
+                <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{stat.label}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
 
-          {/* Recent activity */}
           <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
             <div style={{ background: DARK, padding: "0.6rem 1.5rem" }}>
               <span style={{ color: WHITE, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Recent Activity</span>
@@ -162,9 +186,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Quick links */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
             <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
               <div style={{ background: DARK, padding: "0.6rem 1.5rem" }}>
                 <span style={{ color: WHITE, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Quick Actions</span>
@@ -175,8 +197,9 @@ export default function Dashboard() {
                   { label: "Review Time-Off Requests", href: "https://timeoffrequest.xing.wtf/requests", color: NAVY },
                   { label: "View Disciplinary Records", href: "https://disciplinaryformresponse.xing.wtf/records", color: NAVY },
                   { label: "Generate DAR Report", href: "https://dar.xing.wtf/report", color: GREEN },
+                  { label: "View Call-Off Records", href: "https://calloff.xing.wtf/records", color: "#92400e" },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color, transition: "background 0.15s" }}>
+                  <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color }}>
                     {link.label}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
@@ -197,7 +220,7 @@ export default function Dashboard() {
                   { label: "Call-Off Notice", href: "https://calloff.xing.wtf" },
                   { label: "Disciplinary Response", href: "https://disciplinaryformresponse.xing.wtf" },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: MUTED, transition: "background 0.15s" }}>
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: MUTED }}>
                     {link.label}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
