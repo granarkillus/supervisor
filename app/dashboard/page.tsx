@@ -25,6 +25,7 @@ interface Stats {
   darToday: number;
   darsThisMonth: number;
   callOffsThisMonth: number;
+  unexcusedCallOffs: number;
 }
 
 interface RecentItem {
@@ -38,7 +39,7 @@ interface RecentItem {
 
 export default function Dashboard() {
   const [user, setUser] = useState<{ email: string } | null>(null);
-  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, darToday: 0, darsThisMonth: 0, callOffsThisMonth: 0 });
+  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, darToday: 0, darsThisMonth: 0, callOffsThisMonth: 0, unexcusedCallOffs: 0 });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,19 +58,22 @@ export default function Dashboard() {
 
     const today = new Date().toISOString().split("T")[0];
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    // Use local midnight to avoid timezone issues
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     Promise.all([
       supabase.from("time_off_requests").select("id, officer_name, absence_type, dates_requested, status, submitted_at").eq("status", "pending").order("submitted_at", { ascending: false }).limit(5),
-      supabase.from("calloff_submissions").select("id, officer_name, post, shift_date, notice_type, submitted_at").order("submitted_at", { ascending: false }).limit(5),
+      supabase.from("calloff_submissions").select("id, officer_name, post, shift_date, notice_type, submitted_at, excusal_status").order("submitted_at", { ascending: false }).limit(5),
       supabase.from("disciplinary_records").select("id, officer_name, infraction, action_type, signature, submitted_at").is("signature", null).order("submitted_at", { ascending: false }).limit(5),
       supabase.from("dar_submissions").select("id, officer_name, submitted_at").gte("date", today),
       supabase.from("time_off_requests").select("id", { count: "exact" }).eq("status", "pending"),
-      supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", sevenDaysAgo),
       supabase.from("disciplinary_records").select("id", { count: "exact" }).is("signature", null),
       supabase.from("dar_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
       supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
-    ]).then(([timeOff, callOffs, disciplinary, dars, toCount, coCount, discCount, darMonth, coMonth]) => {
+      supabase.from("calloff_submissions").select("id", { count: "exact" }).eq("excusal_status", "unexcused"),
+    ]).then(([timeOff, callOffs, disciplinary, dars, toCount, coCount, discCount, darMonth, coMonth, unexcused]) => {
       setStats({
         pendingTimeOff: toCount.count || 0,
         recentCallOffs: coCount.count || 0,
@@ -77,6 +81,7 @@ export default function Dashboard() {
         darToday: dars.data?.length || 0,
         darsThisMonth: darMonth.count || 0,
         callOffsThisMonth: coMonth.count || 0,
+        unexcusedCallOffs: unexcused.count || 0,
       });
 
       const items: RecentItem[] = [
@@ -145,19 +150,28 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly stats row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
-          {[
-            { label: `DARs — ${currentMonth}`, value: stats.darsThisMonth, color: GREEN, link: "https://dar.xing.wtf/report", icon: "📋" },
-            { label: `Call-Offs — ${currentMonth}`, value: stats.callOffsThisMonth, color: "#92400e", link: "https://calloff.xing.wtf/records", icon: "📞" },
-          ].map((stat) => (
-            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${stat.color}`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-              <div style={{ fontSize: "1.75rem" }}>{stat.icon}</div>
-              <div>
-                <div style={{ fontSize: "1.75rem", fontWeight: 800, color: stat.color, lineHeight: 1 }}>{loading ? "—" : stat.value}</div>
-                <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{stat.label}</div>
-              </div>
-            </a>
-          ))}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+          <a href="https://dar.xing.wtf/report" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${GREEN}`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div style={{ fontSize: "1.75rem" }}>📋</div>
+            <div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: GREEN, lineHeight: 1 }}>{loading ? "—" : stats.darsThisMonth}</div>
+              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>DARs — {currentMonth}</div>
+            </div>
+          </a>
+          <a href="https://calloff.xing.wtf/records" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div style={{ fontSize: "1.75rem" }}>📞</div>
+            <div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#92400e", lineHeight: 1 }}>{loading ? "—" : stats.callOffsThisMonth}</div>
+              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Call-Offs — {currentMonth}</div>
+            </div>
+          </a>
+          <a href="https://calloff.xing.wtf/records" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div style={{ fontSize: "1.75rem" }}>⚠️</div>
+            <div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#b91c1c", lineHeight: 1 }}>{loading ? "—" : stats.unexcusedCallOffs}</div>
+              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Unexcused — All Time</div>
+            </div>
+          </a>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
@@ -202,13 +216,13 @@ export default function Dashboard() {
                   { label: "Review Time-Off Requests", href: "https://timeoffrequest.xing.wtf/requests", color: NAVY },
                   { label: "View Disciplinary Records", href: "https://disciplinaryformresponse.xing.wtf/records", color: NAVY },
                   { label: "Generate DAR Report", href: "https://dar.xing.wtf/report", color: GREEN },
-                  { label: "View Call-Off Records", href: "https://calloff.xing.wtf/records", color: "#92400e" },
+                  { label: "Call-Off History", href: "https://calloff.xing.wtf/records", color: "#92400e" },
                 ].map((link) => (
                   <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color }}>
                     {link.label}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
-                    </svg>
+                  </svg>
                   </a>
                 ))}
               </div>
