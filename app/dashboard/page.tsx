@@ -105,7 +105,7 @@ export default function Dashboard() {
 
   const typeConfig: Record<string, { label: string; color: string; bg: string; link: (id: string) => string }> = {
     "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: (id) => `https://timeoffrequest.xing.wtf/approve?id=${id}` },
-    "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `https://calloff.xing.wtf/records` },
+    "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `/calloffs` },
     "disciplinary": { label: "Disciplinary", color: "#b91c1c", bg: "#fef2f2", link: (id) => `https://disciplinaryformresponse.xing.wtf/view?id=${id}` },
   };
 
@@ -138,7 +138,7 @@ export default function Dashboard() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
           {[
             { label: "Pending Time-Off", value: stats.pendingTimeOff, color: NAVY, link: "https://timeoffrequest.xing.wtf/requests" },
-            { label: "Call-Offs (7 days)", value: stats.recentCallOffs, color: "#92400e", link: "https://calloff.xing.wtf/records" },
+            { label: "Call-Offs (7 days)", value: stats.recentCallOffs, color: "#92400e", link: "/calloffs" },
             { label: "Pending Acknowledgements", value: stats.pendingDisciplinary, color: "#b91c1c", link: "https://disciplinaryformresponse.xing.wtf/records" },
             { label: "DARs Today", value: stats.darToday, color: GREEN, link: "https://dar.xing.wtf/report" },
           ].map((stat) => (
@@ -158,14 +158,14 @@ export default function Dashboard() {
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>DARs — {currentMonth}</div>
             </div>
           </a>
-          <a href="https://calloff.xing.wtf/records" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>📞</div>
             <div>
               <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#92400e", lineHeight: 1 }}>{loading ? "—" : stats.callOffsThisMonth}</div>
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Call-Offs — {currentMonth}</div>
             </div>
           </a>
-          <a href="https://calloff.xing.wtf/records" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>⚠️</div>
             <div>
               <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#b91c1c", lineHeight: 1 }}>{loading ? "—" : stats.unexcusedCallOffs}</div>
@@ -216,7 +216,7 @@ export default function Dashboard() {
                   { label: "Review Time-Off Requests", href: "https://timeoffrequest.xing.wtf/requests", color: NAVY },
                   { label: "View Disciplinary Records", href: "https://disciplinaryformresponse.xing.wtf/records", color: NAVY },
                   { label: "Generate DAR Report", href: "https://dar.xing.wtf/report", color: GREEN },
-                  { label: "Call-Off History", href: "https://calloff.xing.wtf/records", color: "#92400e" },
+                  { label: "Call-Off History", href: "/calloffs", color: "#92400e" },
                 ].map((link) => (
                   <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color }}>
                     {link.label}
