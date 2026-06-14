@@ -104,7 +104,7 @@ export default function Dashboard() {
   const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
 
   const typeConfig: Record<string, { label: string; color: string; bg: string; link: (id: string) => string }> = {
-    "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: (id) => `https://timeoffrequest.xing.wtf/approve?id=${id}` },
+    "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: () => `https://timeoffrequest.xing.wtf/requests` },
     "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `/calloffs` },
     "disciplinary": { label: "Disciplinary", color: "#b91c1c", bg: "#fef2f2", link: () => `https://disciplinaryformresponse.xing.wtf/records` },
   };
