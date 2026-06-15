@@ -22,9 +22,9 @@ interface Stats {
   pendingTimeOff: number;
   recentCallOffs: number;
   pendingDisciplinary: number;
-  darToday: number;
-  darsThisMonth: number;
-  callOffsThisMonth: number;
+  pendingCallOffReview: number;
+  darsTotal: number;
+  callOffsTotal: number;
   unexcusedCallOffs: number;
 }
 
@@ -39,7 +39,7 @@ interface RecentItem {
 
 export default function Dashboard() {
   const [user, setUser] = useState<{ email: string } | null>(null);
-  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, darToday: 0, darsThisMonth: 0, callOffsThisMonth: 0, unexcusedCallOffs: 0 });
+  const [stats, setStats] = useState<Stats>({ pendingTimeOff: 0, recentCallOffs: 0, pendingDisciplinary: 0, pendingCallOffReview: 0, darsTotal: 0, callOffsTotal: 0, unexcusedCallOffs: 0 });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,31 +56,27 @@ export default function Dashboard() {
       setUser({ email: data.user.email || "" });
     });
 
-    const today = new Date().toISOString().split("T")[0];
-    const now = new Date();
-    // Use local midnight to avoid timezone issues
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     Promise.all([
       supabase.from("time_off_requests").select("id, officer_name, absence_type, dates_requested, status, submitted_at").eq("status", "pending").order("submitted_at", { ascending: false }).limit(5),
       supabase.from("calloff_submissions").select("id, officer_name, post, shift_date, notice_type, submitted_at, excusal_status").order("submitted_at", { ascending: false }).limit(5),
       supabase.from("disciplinary_records").select("id, officer_name, infraction, action_type, signature, submitted_at").is("signature", null).order("submitted_at", { ascending: false }).limit(5),
-      supabase.from("dar_submissions").select("id, officer_name, submitted_at").gte("date", today),
       supabase.from("time_off_requests").select("id", { count: "exact" }).eq("status", "pending"),
       supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", sevenDaysAgo),
       supabase.from("disciplinary_records").select("id", { count: "exact" }).is("signature", null),
-      supabase.from("dar_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
-      supabase.from("calloff_submissions").select("id", { count: "exact" }).gte("submitted_at", monthStart),
+      supabase.from("dar_submissions").select("id", { count: "exact" }),
+      supabase.from("calloff_submissions").select("id", { count: "exact" }),
       supabase.from("calloff_submissions").select("id", { count: "exact" }).eq("excusal_status", "unexcused"),
-    ]).then(([timeOff, callOffs, disciplinary, dars, toCount, coCount, discCount, darMonth, coMonth, unexcused]) => {
+      supabase.from("calloff_submissions").select("id", { count: "exact" }).or("excusal_status.is.null,excusal_status.eq.pending"),
+    ]).then(([timeOff, callOffs, disciplinary, toCount, coCount, discCount, darTotal, coTotal, unexcused, pendingReview]) => {
       setStats({
         pendingTimeOff: toCount.count || 0,
         recentCallOffs: coCount.count || 0,
         pendingDisciplinary: discCount.count || 0,
-        darToday: dars.data?.length || 0,
-        darsThisMonth: darMonth.count || 0,
-        callOffsThisMonth: coMonth.count || 0,
+        pendingCallOffReview: pendingReview.count || 0,
+        darsTotal: darTotal.count || 0,
+        callOffsTotal: coTotal.count || 0,
         unexcusedCallOffs: unexcused.count || 0,
       });
 
@@ -100,8 +96,6 @@ export default function Dashboard() {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
-
-  const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
 
   const typeConfig: Record<string, { label: string; color: string; bg: string; link: (id: string) => string }> = {
     "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: () => `https://timeoffrequest.xing.wtf/requests` },
@@ -140,7 +134,7 @@ export default function Dashboard() {
             { label: "Pending Time-Off", value: stats.pendingTimeOff, color: NAVY, link: "https://timeoffrequest.xing.wtf/requests" },
             { label: "Call-Offs (7 days)", value: stats.recentCallOffs, color: "#92400e", link: "/calloffs" },
             { label: "Pending Acknowledgements", value: stats.pendingDisciplinary, color: "#b91c1c", link: "https://disciplinaryformresponse.xing.wtf/records" },
-            { label: "DARs Today", value: stats.darToday, color: GREEN, link: "https://dar.xing.wtf/report" },
+            { label: "Pending Call-Off Review", value: stats.pendingCallOffReview, color: "#92400e", link: "/calloffs" },
           ].map((stat) => (
             <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${stat.color}`, borderRadius: 4, padding: "1.25rem 1.5rem", textDecoration: "none", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               <div style={{ fontSize: "2rem", fontWeight: 800, color: stat.color, lineHeight: 1 }}>{loading ? "—" : stat.value}</div>
@@ -154,15 +148,15 @@ export default function Dashboard() {
           <a href="https://dar.xing.wtf/report" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${GREEN}`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>📋</div>
             <div>
-              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: GREEN, lineHeight: 1 }}>{loading ? "—" : stats.darsThisMonth}</div>
-              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>DARs — {currentMonth}</div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: GREEN, lineHeight: 1 }}>{loading ? "—" : stats.darsTotal}</div>
+              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>DARs — Total</div>
             </div>
           </a>
           <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>📞</div>
             <div>
-              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#92400e", lineHeight: 1 }}>{loading ? "—" : stats.callOffsThisMonth}</div>
-              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Call-Offs — {currentMonth}</div>
+              <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#92400e", lineHeight: 1 }}>{loading ? "—" : stats.callOffsTotal}</div>
+              <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Call-Offs — Total</div>
             </div>
           </a>
           <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
