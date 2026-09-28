@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const getSupabase = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+import { getSupabase, requireSupervisor } from "@/lib/supabase";
 
 const NAVY = "#1f4e79";
 const DARK = "#1a1a2e";
@@ -46,19 +40,17 @@ export default function CallOffRecordsPage() {
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = getSupabase();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { window.location.href = "/"; return; }
+    requireSupervisor("/").then((u) => {
+      if (!u) return;
+      getSupabase()
+        .from("calloff_submissions")
+        .select("*")
+        .order("submitted_at", { ascending: false })
+        .then(({ data }) => {
+          setRecords(data || []);
+          setLoading(false);
+        });
     });
-
-    supabase
-      .from("calloff_submissions")
-      .select("*")
-      .order("submitted_at", { ascending: false })
-      .then(({ data }) => {
-        setRecords(data || []);
-        setLoading(false);
-      });
   }, []);
 
   const updateExcusalStatus = async (id: string, status: string) => {

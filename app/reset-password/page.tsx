@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const getSupabase = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+import { getSupabase } from "@/lib/supabase";
 
 const NAVY = "#1f4e79";
 const SOFT_BG = "#f4f6f9";
