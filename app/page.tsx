@@ -1,13 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const getSupabase = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+import { useState, useEffect } from "react";
+import { getSupabase, safeNext } from "@/lib/supabase";
 
 const NAVY = "#1f4e79";
 const SOFT_BG = "#f4f6f9";
@@ -24,6 +18,27 @@ export default function LoginPage() {
   const [resetMode, setResetMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
+  // Other Allied sites send supervisors here with ?next=<page> and come back after login.
+  const goNext = () => {
+    const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+    window.location.href = next || "/dashboard";
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("denied")) {
+      setError("That account doesn't have supervisor access. Sign in with a supervisor account.");
+      return;
+    }
+    // Already signed in as a supervisor: skip the form.
+    const supabase = getSupabase();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const { data: isSupervisor } = await supabase.rpc("is_supervisor");
+      if (isSupervisor === true) goNext();
+    });
+  }, []);
+
   const handleLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
@@ -38,7 +53,15 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    const { data: isSupervisor } = await supabase.rpc("is_supervisor");
+    if (isSupervisor !== true) {
+      await supabase.auth.signOut();
+      setError("That account doesn't have supervisor access.");
+      setLoading(false);
+      return;
+    }
+
+    goNext();
   };
 
   const handleReset = async () => {

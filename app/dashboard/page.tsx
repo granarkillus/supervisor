@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const getSupabase = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+import { getSupabase, requireSupervisor } from "@/lib/supabase";
 
 const NAVY = "#1f4e79";
 const DARK = "#1a1a2e";
@@ -49,13 +43,15 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const supabase = getSupabase();
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { window.location.href = "/"; return; }
-      setUser({ email: data.user.email || "" });
+    requireSupervisor("/").then((u) => {
+      if (!u) return;
+      setUser({ email: u.email || "" });
+      loadDashboard();
     });
+  }, []);
 
+  const loadDashboard = () => {
+    const supabase = getSupabase();
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     Promise.all([
@@ -89,7 +85,7 @@ export default function Dashboard() {
       setRecent(items);
       setLoading(false);
     });
-  }, []);
+  };
 
   const handleSignOut = async () => {
     const supabase = getSupabase();
