@@ -53,6 +53,21 @@ export default function CallOffRecordsPage() {
     });
   }, []);
 
+  // Documents are in a private bucket. Older rows store a full public URL,
+  // newer ones just the file path; either way open a 10-minute signed link.
+  const openDocument = async (stored: string) => {
+    const path = stored.includes("/calloff-documents/") ? decodeURIComponent(stored.split("/calloff-documents/")[1].split("?")[0]) : stored;
+    const win = window.open("", "_blank");
+    const { data, error } = await getSupabase().storage.from("calloff-documents").createSignedUrl(path, 600);
+    if (error || !data?.signedUrl) {
+      win?.close();
+      alert("Couldn't open the document. Please try again.");
+      return;
+    }
+    if (win) win.location.href = data.signedUrl;
+    else window.location.href = data.signedUrl;
+  };
+
   const updateExcusalStatus = async (id: string, status: string) => {
     setUpdating(id + status);
     const supabase = getSupabase();
@@ -243,7 +258,7 @@ export default function CallOffRecordsPage() {
 
                     {r.document_url && (
                       <div style={{ marginTop: "0.75rem" }}>
-                        <a href={r.document_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: NAVY, color: WHITE, borderRadius: 4, padding: "0.45rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); openDocument(r.document_url); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: NAVY, color: WHITE, borderRadius: 4, padding: "0.45rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                           View Documentation
                         </a>
