@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { getSupabase, requireSupervisor } from "@/lib/supabase";
-import NeedsAttention from "./NeedsAttention";
 
 const NAVY = "#1a4480";
 const DARK = "#243b5e";
@@ -124,8 +123,6 @@ export default function Dashboard() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1rem" }}>
-
-        <NeedsAttention onChange={loadDashboard} />
 
         {/* Top stats row */}
         <div className="grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
