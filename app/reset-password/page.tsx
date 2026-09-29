@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { getSupabase } from "@/lib/supabase";
 
-const NAVY = "#1f4e79";
-const SOFT_BG = "#f4f6f9";
+const NAVY = "#1a4480";
+const SOFT_BG = "#f2f5fa";
 const WHITE = "#ffffff";
-const MUTED = "#6b7280";
-const TEXT = "#1a1a2e";
+const MUTED = "#5b6474";
+const TEXT = "#0f172a";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -39,9 +39,9 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
-      <div style={{ maxWidth: 420, width: "100%", background: WHITE, borderRadius: 4, boxShadow: "0 2px 16px rgba(31,78,121,0.12)", overflow: "hidden" }}>
-        <div style={{ background: NAVY, padding: "1.5rem 2rem" }}>
+    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "var(--font-sans)", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
+      <div style={{ maxWidth: 420, width: "100%", background: WHITE, borderRadius: 12, boxShadow: "0 10px 30px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f2d57 0%, #1d4f91 100%)", padding: "1.5rem 2rem" }}>
           <div style={{ color: "#ffffff", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             Allied<span style={{ fontWeight: 300 }}>Universal</span><sup style={{ fontSize: "0.5rem", fontWeight: 300, marginLeft: 1 }}>™</sup>
           </div>
@@ -71,11 +71,11 @@ export default function ResetPasswordPage() {
                 <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" onKeyDown={(e) => e.key === "Enter" && handleReset()} style={inputStyle} />
               </div>
               {error && (
-                <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 4, padding: "0.65rem 1rem", fontSize: "0.82rem", color: "#b91c1c", marginBottom: "1rem" }}>
+                <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 12, padding: "0.65rem 1rem", fontSize: "0.82rem", color: "#b91c1c", marginBottom: "1rem" }}>
                   {error}
                 </div>
               )}
-              <button onClick={handleReset} disabled={!password || !confirm || loading} style={{ background: !password || !confirm || loading ? "#9ca3af" : NAVY, color: "#ffffff", border: "none", borderRadius: 4, padding: "0.7rem 1.75rem", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.04em", cursor: !password || !confirm || loading ? "not-allowed" : "pointer", fontFamily: "inherit", textTransform: "uppercase", width: "100%" }}>
+              <button onClick={handleReset} disabled={!password || !confirm || loading} style={{ background: !password || !confirm || loading ? "#9ca3af" : NAVY, color: "#ffffff", border: "none", borderRadius: 12, padding: "0.7rem 1.75rem", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.04em", cursor: !password || !confirm || loading ? "not-allowed" : "pointer", fontFamily: "inherit", textTransform: "uppercase", width: "100%" }}>
                 {loading ? "Updating..." : "Set Password"}
               </button>
             </>
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+    <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
       {children}
     </div>
   );
@@ -96,6 +96,6 @@ function Label({ children }: { children: React.ReactNode }) {
 
 const inputStyle: React.CSSProperties = {
   width: "100%", boxSizing: "border-box", padding: "0.6rem 0.75rem",
-  border: "1px solid #d1d5db", borderRadius: 4, fontSize: "0.88rem",
-  color: "#1a1a2e", background: "#fafbfc", outline: "none", fontFamily: "inherit",
+  border: "1px solid #d1d5db", borderRadius: 12, fontSize: "1rem",
+  color: "#1a1a2e", background: "#ffffff", outline: "none", fontFamily: "inherit",
 };

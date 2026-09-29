@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { getSupabase, requireSupervisor } from "@/lib/supabase";
+import NeedsAttention from "./NeedsAttention";
 
-const NAVY = "#1f4e79";
-const DARK = "#1a1a2e";
-const SOFT_BG = "#f4f6f9";
+const NAVY = "#1a4480";
+const DARK = "#243b5e";
+const SOFT_BG = "#f2f5fa";
 const WHITE = "#ffffff";
-const MUTED = "#6b7280";
-const BORDER = "#d1d5db";
-const TEXT = "#1a1a2e";
-const GREEN = "#2f6b3a";
+const MUTED = "#5b6474";
+const BORDER = "#dbe2ec";
+const TEXT = "#0f172a";
+const GREEN = "#15803d";
 
 interface Stats {
   pendingTimeOff: number;
@@ -94,15 +95,15 @@ export default function Dashboard() {
   };
 
   const typeConfig: Record<string, { label: string; color: string; bg: string; link: (id: string) => string }> = {
-    "time-off": { label: "Time Off", color: NAVY, bg: "#eef3f8", link: () => `https://timeoffrequest.xing.wtf/requests` },
+    "time-off": { label: "Time Off", color: NAVY, bg: "#eaf1fb", link: () => `https://timeoffrequest.xing.wtf/requests` },
     "calloff": { label: "Call Off", color: "#92400e", bg: "#fff3cd", link: () => `/calloffs` },
     "disciplinary": { label: "Disciplinary", color: "#b91c1c", bg: "#fef2f2", link: () => `https://disciplinaryformresponse.xing.wtf/records` },
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "var(--font-sans)" }}>
 
-      <div style={{ background: NAVY, padding: "0.75rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="hdr" style={{ background: "linear-gradient(135deg, #0f2d57 0%, #1d4f91 100%)", padding: "0.9rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <div style={{ color: WHITE, fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             Allied<span style={{ fontWeight: 300 }}>Universal</span><sup style={{ fontSize: "0.5rem", fontWeight: 300, marginLeft: 1 }}>™</sup>
@@ -116,7 +117,7 @@ export default function Dashboard() {
           </a>
           <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" }}>|</div>
           <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.78rem" }}>{user?.email}</div>
-          <button onClick={handleSignOut} style={{ background: "none", border: "1px solid rgba(255,255,255,0.3)", color: WHITE, borderRadius: 4, padding: "0.3rem 0.75rem", fontSize: "0.75rem", cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={handleSignOut} style={{ background: "none", border: "1px solid rgba(255,255,255,0.3)", color: WHITE, borderRadius: 12, padding: "0.3rem 0.75rem", fontSize: "0.75rem", cursor: "pointer", fontFamily: "inherit" }}>
             Sign Out
           </button>
         </div>
@@ -124,15 +125,17 @@ export default function Dashboard() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1rem" }}>
 
+        <NeedsAttention onChange={loadDashboard} />
+
         {/* Top stats row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
+        <div className="grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
           {[
             { label: "Pending Time-Off", value: stats.pendingTimeOff, color: NAVY, link: "https://timeoffrequest.xing.wtf/requests" },
             { label: "Call-Offs (7 days)", value: stats.recentCallOffs, color: "#92400e", link: "/calloffs" },
             { label: "Pending Acknowledgements", value: stats.pendingDisciplinary, color: "#b91c1c", link: "https://disciplinaryformresponse.xing.wtf/records" },
             { label: "Pending Call-Off Review", value: stats.pendingCallOffReview, color: "#92400e", link: "/calloffs" },
           ].map((stat) => (
-            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${stat.color}`, borderRadius: 4, padding: "1.25rem 1.5rem", textDecoration: "none", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <a key={stat.label} href={stat.link} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${stat.color}`, borderRadius: 12, padding: "1.25rem 1.5rem", textDecoration: "none", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               <div style={{ fontSize: "2rem", fontWeight: 800, color: stat.color, lineHeight: 1 }}>{loading ? "—" : stat.value}</div>
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{stat.label}</div>
             </a>
@@ -140,22 +143,22 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly stats row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
-          <a href="https://dar.xing.wtf/report" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${GREEN}`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+        <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+          <a href="https://dar.xing.wtf/report" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${GREEN}`, borderRadius: 12, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>📋</div>
             <div>
               <div style={{ fontSize: "1.75rem", fontWeight: 800, color: GREEN, lineHeight: 1 }}>{loading ? "—" : stats.darsTotal}</div>
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>DARs — Total</div>
             </div>
           </a>
-          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #92400e`, borderRadius: 12, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>📞</div>
             <div>
               <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#92400e", lineHeight: 1 }}>{loading ? "—" : stats.callOffsTotal}</div>
               <div style={{ fontSize: "0.75rem", color: MUTED, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Call-Offs — Total</div>
             </div>
           </a>
-          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 4, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <a href="/calloffs" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderLeft: `4px solid #b91c1c`, borderRadius: 12, padding: "1rem 1.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ fontSize: "1.75rem" }}>⚠️</div>
             <div>
               <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#b91c1c", lineHeight: 1 }}>{loading ? "—" : stats.unexcusedCallOffs}</div>
@@ -164,9 +167,9 @@ export default function Dashboard() {
           </a>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+        <div className="grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
 
-          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden" }}>
             <div style={{ background: DARK, padding: "0.6rem 1.5rem" }}>
               <span style={{ color: WHITE, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Recent Activity</span>
             </div>
@@ -196,7 +199,7 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden" }}>
               <div style={{ background: DARK, padding: "0.6rem 1.5rem" }}>
                 <span style={{ color: WHITE, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Quick Actions</span>
               </div>
@@ -208,7 +211,7 @@ export default function Dashboard() {
                   { label: "Generate DAR Report", href: "https://dar.xing.wtf/report", color: GREEN },
                   { label: "Call-Off History", href: "/calloffs", color: "#92400e" },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color }}>
+                  <a key={link.label} href={link.href} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 12, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: link.color }}>
                     {link.label}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
@@ -218,7 +221,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden" }}>
               <div style={{ background: DARK, padding: "0.6rem 1.5rem" }}>
                 <span style={{ color: WHITE, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Employee Forms</span>
               </div>
@@ -229,7 +232,7 @@ export default function Dashboard() {
                   { label: "Call-Off Notice", href: "https://calloff.xing.wtf" },
                   { label: "Disciplinary Response", href: "https://disciplinaryformresponse.xing.wtf" },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 4, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: MUTED }}>
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: SOFT_BG, border: `1px solid ${BORDER}`, borderRadius: 12, textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, color: MUTED }}>
                     {link.label}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
