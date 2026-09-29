@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { getSupabase, requireSupervisor } from "@/lib/supabase";
 
-const NAVY = "#1f4e79";
-const DARK = "#1a1a2e";
-const SOFT_BG = "#f4f6f9";
+const NAVY = "#1a4480";
+const DARK = "#243b5e";
+const SOFT_BG = "#f2f5fa";
 const WHITE = "#ffffff";
-const MUTED = "#6b7280";
-const BORDER = "#d1d5db";
-const TEXT = "#1a1a2e";
-const GREEN = "#2f6b3a";
+const MUTED = "#5b6474";
+const BORDER = "#dbe2ec";
+const TEXT = "#0f172a";
+const GREEN = "#15803d";
 
 interface CallOff {
   id: string;
@@ -133,10 +133,10 @@ export default function CallOffRecordsPage() {
   const unexcused = records.filter((r) => r.excusal_status === "unexcused").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", padding: "2rem 1rem" }}>
+    <div style={{ minHeight: "100vh", background: SOFT_BG, fontFamily: "var(--font-sans)", padding: "2rem 1rem" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
-        <div style={{ background: NAVY, padding: "1.25rem 2rem", borderRadius: "4px 4px 0 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f2d57 0%, #1d4f91 100%)", padding: "1.25rem 2rem", borderRadius: "4px 4px 0 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ color: WHITE, fontSize: "1rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase" }}>
               Allied<span style={{ fontWeight: 300 }}>Universal</span><sup style={{ fontSize: "0.5rem", fontWeight: 300, marginLeft: 1 }}>™</sup>
@@ -172,10 +172,10 @@ export default function CallOffRecordsPage() {
 
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderTop: "none", padding: "1rem 2rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by officer, post, or reason..."
-            style={{ flex: 1, minWidth: 200, padding: "0.45rem 0.75rem", border: `1px solid ${BORDER}`, borderRadius: 4, fontSize: "0.85rem", color: TEXT, background: "#fafbfc", outline: "none", fontFamily: "inherit" }} />
+            style={{ flex: 1, minWidth: 200, padding: "0.45rem 0.75rem", border: `1px solid ${BORDER}`, borderRadius: 12, fontSize: "0.85rem", color: TEXT, background: "#ffffff", outline: "none", fontFamily: "inherit" }} />
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             {[["all","All"],["pending","Pending"],["excused","Excused"],["unexcused","Unexcused"],["4plus","4+ hr"],["less4","< 4hr"],["docs","With Docs"]].map(([val, label]) => (
-              <button key={val} onClick={() => setFilter(val)} style={{ padding: "0.4rem 0.9rem", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, border: `1px solid ${filter === val ? NAVY : BORDER}`, background: filter === val ? NAVY : WHITE, color: filter === val ? WHITE : MUTED, cursor: "pointer", fontFamily: "inherit" }}>
+              <button key={val} onClick={() => setFilter(val)} style={{ padding: "0.4rem 0.9rem", borderRadius: 12, fontSize: "0.78rem", fontWeight: 700, border: `1px solid ${filter === val ? NAVY : BORDER}`, background: filter === val ? NAVY : WHITE, color: filter === val ? WHITE : MUTED, cursor: "pointer", fontFamily: "inherit" }}>
                 {label}
               </button>
             ))}
@@ -202,7 +202,7 @@ export default function CallOffRecordsPage() {
                       <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: isLess4 ? "#fef2f2" : "#e8f5e9", color: isLess4 ? "#b91c1c" : GREEN, border: `1px solid ${isLess4 ? "#fca5a5" : "#a5d6a7"}`, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
                         {isLess4 ? "< 4hr Notice" : "4+ hr Notice"}
                       </span>
-                      {r.document_url && <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#eef3f8", color: NAVY, border: `1px solid #c3d4e8`, textTransform: "uppercase" as const }}>Doc Attached</span>}
+                      {r.document_url && <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#eaf1fb", color: NAVY, border: `1px solid #c3d4e8`, textTransform: "uppercase" as const }}>Doc Attached</span>}
                     </div>
                     <div style={{ fontSize: "0.78rem", color: MUTED }}>{r.post} &nbsp;·&nbsp; {formatDate(r.shift_date)}{r.shift_start && ` @ ${r.shift_start}`}{r.shift_end && ` – ${r.shift_end}`} &nbsp;·&nbsp; {r.reason}</div>
                     <div style={{ fontSize: "0.72rem", color: MUTED, marginTop: 2 }}>Submitted: {formatDateTime(r.submitted_at)}</div>
@@ -216,7 +216,7 @@ export default function CallOffRecordsPage() {
                 {isExpanded && (
                   <div style={{ padding: "0 2rem 1.5rem", borderTop: `1px solid ${BORDER}`, background: SOFT_BG }}>
                     <div style={{ paddingTop: "1rem", marginBottom: "1.25rem" }}>
-                      <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.6rem" }}>Excusal Classification</div>
+                      <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "#334155", marginBottom: "0.6rem" }}>Excusal Classification</div>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         {[
                           { val: "excused", label: "Excused", activeColor: GREEN, activeBg: "#e8f5e9", activeBorder: "#a5d6a7" },
@@ -227,14 +227,14 @@ export default function CallOffRecordsPage() {
                           const isLoadingBtn = updating === r.id + val;
                           return (
                             <button key={val} onClick={(e) => { e.stopPropagation(); updateExcusalStatus(r.id, val); }} disabled={!!updating}
-                              style={{ padding: "0.45rem 1rem", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, border: `1.5px solid ${isActive ? activeBorder : BORDER}`, background: isActive ? activeBg : WHITE, color: isActive ? activeColor : MUTED, cursor: updating ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all 0.15s", opacity: isLoadingBtn ? 0.6 : 1 }}>
+                              style={{ padding: "0.45rem 1rem", borderRadius: 12, fontSize: "0.78rem", fontWeight: 700, border: `1.5px solid ${isActive ? activeBorder : BORDER}`, background: isActive ? activeBg : WHITE, color: isActive ? activeColor : MUTED, cursor: updating ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all 0.15s", opacity: isLoadingBtn ? 0.6 : 1 }}>
                               {isLoadingBtn ? "..." : (isActive ? `✓ ${label}` : label)}
                             </button>
                           );
                         })}
                       </div>
                       {excusalStatus === "unexcused" && (
-                        <div style={{ marginTop: "0.6rem", background: "#fef2f2", border: "1px solid #fca5a5", borderLeft: "3px solid #b91c1c", borderRadius: 3, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: "#b91c1c", fontWeight: 600 }}>
+                        <div style={{ marginTop: "0.6rem", background: "#fef2f2", border: "1px solid #fca5a5", borderLeft: "3px solid #b91c1c", borderRadius: 8, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: "#b91c1c", fontWeight: 600 }}>
                           Unexcused absence — disciplinary action may apply per AUS attendance policy.
                         </div>
                       )}
@@ -252,13 +252,13 @@ export default function CallOffRecordsPage() {
                     {r.comments && (
                       <div style={{ marginTop: "0.75rem" }}>
                         <div style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", color: MUTED, marginBottom: 2 }}>Comments</div>
-                        <div style={{ fontSize: "0.85rem", color: TEXT, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 3, padding: "0.5rem 0.75rem" }}>{r.comments}</div>
+                        <div style={{ fontSize: "0.85rem", color: TEXT, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "0.5rem 0.75rem" }}>{r.comments}</div>
                       </div>
                     )}
 
                     {r.document_url && (
                       <div style={{ marginTop: "0.75rem" }}>
-                        <a href="#" onClick={(e) => { e.preventDefault(); openDocument(r.document_url); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: NAVY, color: WHITE, borderRadius: 4, padding: "0.45rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); openDocument(r.document_url); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: NAVY, color: WHITE, borderRadius: 12, padding: "0.45rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                           View Documentation
                         </a>
